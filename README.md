@@ -6,23 +6,16 @@ An experiment in building a web application whose capabilities are supplied by d
 
 > Adding an agent should be capable of adding functionality to the site without requiring feature-specific changes to the host application.
 
-The host owns rendering, security boundaries, transport, and generic interaction primitives. Agents advertise capabilities. Other agents and the experience layer can discover those capabilities at runtime.
+The host owns rendering, security boundaries, transport, and generic interaction primitives. Agents advertise capabilities. The registry resolves capabilities to providers, and agents return declarative experiences that the generic React host renders.
 
-## v0.1
-
-The first vertical slice contains:
-
-- **Agent Registry** — discovers the capabilities registered with the host.
-- **Content Agent** — advertises the initial Home, About, and Services capabilities.
-- **Navigation Agent** — builds navigation from capability metadata rather than hard-coded menu items.
-- **Generic React Host** — renders navigation and content without knowing which agents supplied them.
+## Current architecture
 
 ```text
 Browser
    |
-Generic React Host
+Generic React Renderer
    |
-ASP.NET Core Host
+GET /api/experience/{capability}
    |
 Agent Registry
    |
@@ -31,57 +24,47 @@ Agent Registry
    |      +-- content.about
    |      +-- content.services
    |
-   +-- NavigationAgent
-          +-- site.navigation
+   +-- EstimateAgent
+          +-- estimate.project
 ```
 
-## Architectural invariant
+Navigation is also capability-derived. Neither React nor NavigationAgent contains an Estimate-specific menu item.
 
-The host must not require feature-specific code changes when a new agent is added.
+## Acceptance tests
 
-Our first acceptance test:
+### Experiment #1: capability-derived navigation
 
-1. Run the site with ContentAgent and NavigationAgent.
-2. Observe: `Home | About | Services`.
-3. Add an EstimateAgent advertising `estimate.project` and a visible navigation hint.
-4. Register/deploy that agent.
-5. Observe: `Home | About | Services | Get an Estimate`.
-6. No React navigation code is changed.
+1. Add EstimateAgent advertising `estimate.project`.
+2. Give that capability a visible navigation hint.
+3. Register the agent.
+4. Observe `Get an Estimate` in navigation.
+5. Do not change React navigation or NavigationAgent.
 
-The next test will go further: selecting **Get an Estimate** must allow the new agent to supply the experience needed to perform that capability without adding an Estimate-specific page to the host.
+**Status: passed.**
 
-## Project structure
+### Experiment #2: agent-provided experience
 
-```text
-src/
-  AgentWeb.Host/
-    Agents/
-      AgentContracts.cs
-      AgentRegistry.cs
-      ContentAgent.cs
-      NavigationAgent.cs
-    Program.cs
+1. Select `Get an Estimate`.
+2. The generic endpoint asks AgentRegistry for the provider of `estimate.project`.
+3. AgentRegistry resolves EstimateAgent.
+4. EstimateAgent returns generic experience components.
+5. React renders heading, text, input, select, and button components.
+6. Program.cs, routing, and React contain no Estimate-specific page.
 
-  agent-web-ui/
-    src/
-      main.jsx
-      styles.css
-```
+**Status: implemented for local verification.**
 
-## Run the prototype
+## Run
 
-### API
+Requires the .NET 9 SDK and Node.js.
 
-Requires the .NET 10 SDK.
+API:
 
 ```bash
 cd src/AgentWeb.Host
 dotnet run --urls http://localhost:5000
 ```
 
-### UI
-
-Requires Node.js.
+UI:
 
 ```bash
 cd src/agent-web-ui
@@ -89,29 +72,31 @@ npm install
 npm run dev
 ```
 
-The UI defaults to `http://localhost:5000` for the API. Override it with `VITE_API_URL` if needed.
+Open the Vite URL, normally `http://localhost:5173`.
 
-## What this is not
+## Important limitation
 
-This is not a traditional website with a chatbot attached to it.
+Agents are still registered in-process in `Program.cs`. Adding a new agent therefore still requires rebuilding/restarting the host. The next architectural milestone is external discovery so an agent can be added without compiling the host.
 
-It is an experiment in treating agents as installable application capabilities. The long-term goal is for agents to advertise their identity, capabilities, inputs, outputs, UI requirements, permissions, and events through a common contract.
+The current experience component model is intentionally tiny and proprietary. It is a proving scaffold, not a proposed standard. We intend to evaluate A2UI/A2A/MCP compatibility rather than unnecessarily inventing competing protocols.
 
 ## Roadmap
 
-- [x] Define a minimal agent manifest.
-- [x] Build an in-process agent registry.
-- [x] Generate navigation from discovered capabilities.
-- [x] Add a generic React host.
-- [ ] Add EstimateAgent without changing navigation code.
-- [ ] Define a declarative UI schema.
-- [ ] Let EstimateAgent compose its own experience.
-- [ ] Move agents out of process so capabilities can be added without rebuilding the host.
-- [ ] Add agent discovery and health/lifecycle handling.
-- [ ] Add permissions and policy enforcement.
-- [ ] Explore A2A/MCP/A2UI compatibility.
-- [ ] Add contextual navigation based on visitor intent.
+- [x] Minimal agent manifest
+- [x] In-process agent registry
+- [x] Capability-derived navigation
+- [x] Generic React renderer
+- [x] EstimateAgent adds navigation without frontend changes
+- [x] Registry resolves a capability to its provider
+- [x] Agent supplies a declarative experience
+- [ ] Submit actions back to the owning agent
+- [ ] External/runtime agent discovery
+- [ ] Agent lifecycle and health
+- [ ] Permissions and policy enforcement
+- [ ] A2A/MCP/A2UI compatibility
+- [ ] Agent dependency/capability graph
+- [ ] Contextual experience composition
 
 ## Status
 
-Experimental. The architecture is intentionally small so each step can prove or falsify the core idea.
+Experimental. Each milestone is designed to prove or falsify the central claim rather than hide it behind framework machinery.
