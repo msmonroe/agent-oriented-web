@@ -1,3 +1,5 @@
+using AgentWeb.Contracts;
+
 namespace AgentWeb.Host.Agents;
 
 public sealed class ContentAgent : ISiteAgent
@@ -16,15 +18,9 @@ public sealed class ContentAgent : ISiteAgent
     {
         var (heading, body) = request.Capability switch
         {
-            "content.about" => (
-                "About This Experiment",
-                "This site is a generic host. Its available experiences are discovered from registered agents."),
-            "content.services" => (
-                "Agent-Provided Capabilities",
-                "New agents can advertise capabilities that the host can discover without hard-coding them into navigation."),
-            _ => (
-                "An Agent-Oriented Website",
-                "The host renders the experience. Agents decide what capabilities are available.")
+            "content.about" => ("About This Experiment", "This site is a generic host. Its available experiences are discovered from registered agents."),
+            "content.services" => ("Agent-Provided Capabilities", "New agents can advertise capabilities that the host can discover without hard-coding them into navigation."),
+            _ => ("An Agent-Oriented Website", "The host renders the experience. Agents decide what capabilities are available.")
         };
 
         return Task.FromResult(new AgentResponse(
