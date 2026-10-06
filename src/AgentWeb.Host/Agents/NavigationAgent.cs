@@ -1,0 +1,26 @@
+namespace AgentWeb.Host.Agents;
+
+public sealed record NavigationItem(string Label, string Intent);
+public sealed record NavigationModel(IReadOnlyList<NavigationItem> Items);
+
+public sealed class NavigationAgent(AgentRegistry registry) : ISiteAgent
+{
+    public AgentManifest Manifest { get; } = new(
+        "navigation",
+        "Navigation Agent",
+        "Builds navigation from capabilities advertised by registered agents.",
+        [new("site.navigation", "Compose site navigation")]);
+
+    public NavigationModel Build()
+    {
+        var items = registry.GetCapabilities()
+            .Where(capability => capability.Navigation is { Visible: true })
+            .OrderBy(capability => capability.Navigation!.Priority)
+            .Select(capability => new NavigationItem(
+                capability.Navigation!.Label,
+                capability.Id))
+            .ToList();
+
+        return new NavigationModel(items);
+    }
+}
