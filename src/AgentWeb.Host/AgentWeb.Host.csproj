@@ -4,4 +4,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AgentWeb.Contracts\AgentWeb.Contracts.csproj" />
+  </ItemGroup>
 </Project>
