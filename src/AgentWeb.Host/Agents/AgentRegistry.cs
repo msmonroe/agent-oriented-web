@@ -9,4 +9,17 @@ public sealed class AgentRegistry(IEnumerable<ISiteAgent> agents)
 
     public IEnumerable<AgentCapability> GetCapabilities() =>
         _agents.SelectMany(agent => agent.Manifest.Capabilities);
+
+    public ISiteAgent? Resolve(string capability) =>
+        _agents.FirstOrDefault(agent =>
+            agent.Manifest.Capabilities.Any(candidate =>
+                string.Equals(candidate.Id, capability, StringComparison.OrdinalIgnoreCase)));
+
+    public async Task<AgentResponse?> ExecuteAsync(string capability)
+    {
+        var agent = Resolve(capability);
+        return agent is null
+            ? null
+            : await agent.ExecuteAsync(new AgentRequest(capability));
+    }
 }
