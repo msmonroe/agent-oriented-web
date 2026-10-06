@@ -1,3 +1,5 @@
+using AgentWeb.Contracts;
+
 namespace AgentWeb.Host.Agents;
 
 public sealed record NavigationItem(string Label, string Intent);
@@ -16,9 +18,7 @@ public sealed class NavigationAgent(AgentRegistry registry) : ISiteAgent
         var items = registry.GetCapabilities()
             .Where(capability => capability.Navigation is { Visible: true })
             .OrderBy(capability => capability.Navigation!.Priority)
-            .Select(capability => new NavigationItem(
-                capability.Navigation!.Label,
-                capability.Id))
+            .Select(capability => new NavigationItem(capability.Navigation!.Label, capability.Id))
             .ToList();
 
         return new NavigationModel(items);
@@ -27,14 +27,8 @@ public sealed class NavigationAgent(AgentRegistry registry) : ISiteAgent
     public Task<AgentResponse> ExecuteAsync(AgentRequest request)
     {
         var navigation = Build();
-
         return Task.FromResult(new AgentResponse(
             request.Capability,
-            [
-                new("navigation", new Dictionary<string, object?>
-                {
-                    ["items"] = navigation.Items
-                })
-            ]));
+            [new("navigation", new Dictionary<string, object?> { ["items"] = navigation.Items })]));
     }
 }
