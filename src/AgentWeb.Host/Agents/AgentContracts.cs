@@ -17,7 +17,18 @@ public sealed record AgentManifest(
     string Description,
     IReadOnlyList<AgentCapability> Capabilities);
 
+public sealed record AgentRequest(string Capability);
+
+public sealed record ExperienceComponent(
+    string Type,
+    IReadOnlyDictionary<string, object?> Props);
+
+public sealed record AgentResponse(
+    string Capability,
+    IReadOnlyList<ExperienceComponent> Components);
+
 public interface ISiteAgent
 {
     AgentManifest Manifest { get; }
+    Task<AgentResponse> ExecuteAsync(AgentRequest request);
 }
