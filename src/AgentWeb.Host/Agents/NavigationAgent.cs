@@ -23,4 +23,18 @@ public sealed class NavigationAgent(AgentRegistry registry) : ISiteAgent
 
         return new NavigationModel(items);
     }
+
+    public Task<AgentResponse> ExecuteAsync(AgentRequest request)
+    {
+        var navigation = Build();
+
+        return Task.FromResult(new AgentResponse(
+            request.Capability,
+            [
+                new("navigation", new Dictionary<string, object?>
+                {
+                    ["items"] = navigation.Items
+                })
+            ]));
+    }
 }
