@@ -3,6 +3,7 @@ using AgentWeb.Host.Agents;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<ISiteAgent, ContentAgent>();
+builder.Services.AddSingleton<ISiteAgent, EstimateAgent>();
 builder.Services.AddSingleton<AgentRegistry>();
 builder.Services.AddSingleton<NavigationAgent>();
 
@@ -34,6 +35,12 @@ app.MapGet("/api/content/{intent}", (string intent) =>
             type = "page",
             heading = "Agent-Provided Capabilities",
             body = "New agents can advertise capabilities that the host can discover without hard-coding them into navigation."
+        },
+        "estimate.project" => new
+        {
+            type = "page",
+            heading = "Project Estimate",
+            body = "EstimateAgent is registered. The navigation discovered this capability without any change to the React host or NavigationAgent."
         },
         _ => new
         {
