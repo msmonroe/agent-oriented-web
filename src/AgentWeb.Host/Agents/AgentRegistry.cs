@@ -1,3 +1,5 @@
+using AgentWeb.Contracts;
+
 namespace AgentWeb.Host.Agents;
 
 public sealed class AgentRegistry(IEnumerable<ISiteAgent> agents)
