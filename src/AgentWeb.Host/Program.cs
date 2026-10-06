@@ -1,9 +1,15 @@
+using AgentWeb.Contracts;
 using AgentWeb.Host.Agents;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var pluginDirectory = Path.Combine(builder.Environment.ContentRootPath, "plugins");
+var discoveredAgents = PluginAgentLoader.Load(pluginDirectory);
+
 builder.Services.AddSingleton<ISiteAgent, ContentAgent>();
-builder.Services.AddSingleton<ISiteAgent, EstimateAgent>();
+foreach (var agent in discoveredAgents)
+    builder.Services.AddSingleton(typeof(ISiteAgent), agent);
+
 builder.Services.AddSingleton<AgentRegistry>();
 builder.Services.AddSingleton<NavigationAgent>();
 
@@ -23,7 +29,6 @@ app.MapGet("/api/navigation", (NavigationAgent navigation) => navigation.Build()
 app.MapGet("/api/experience/{capability}", async (string capability, AgentRegistry registry) =>
 {
     var response = await registry.ExecuteAsync(capability);
-
     return response is null
         ? Results.NotFound(new { error = $"No agent provides capability '{capability}'." })
         : Results.Ok(response);
