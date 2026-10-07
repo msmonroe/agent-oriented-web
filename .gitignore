@@ -9,3 +9,7 @@ dist/
 .env
 .env.*
 !.env.example
+
+# Runtime-loaded agent binaries are build artifacts.
+src/AgentWeb.Host/plugins/*.dll
+src/AgentWeb.Host/plugins/*.pdb
