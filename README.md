@@ -70,6 +70,7 @@ src/
       AgentRegistry.cs
       ContentAgent.cs
       NavigationAgent.cs
+      ExperienceResolver.cs
       PluginAgentLoader.cs
     plugins/
     Program.cs
@@ -178,6 +179,18 @@ This allows the runtime to inspect composition requirements before execution rat
 
 **Status: implemented for local verification.**
 
+### Experiment #8: graph-derived experience viability
+
+ExperienceResolver recursively evaluates whether a capability is viable. A capability is viable only when it has a provider and every required dependency is also viable. Required dependency cycles are treated as non-viable.
+
+NavigationAgent now includes only visible capabilities that ExperienceResolver considers viable. The generic experience and action endpoints also reject non-viable capabilities before execution.
+
+The Host exposes `GET /api/viability` for inspection.
+
+With EstimateAgent installed, Project Planner remains visible. If EstimateAgent is removed and the host is restarted, `plan.project.submit` becomes non-viable because its required `estimate.project.submit` dependency has no provider.
+
+**Status: implemented for local verification.**
+
 ## Current limitations
 
 Discovery currently occurs at host startup. Installing or removing a plugin requires a host restart.
@@ -202,6 +215,7 @@ The current experience component model is intentionally tiny. It proves generic 
 - [ ] A2A/MCP/A2UI compatibility
 - [x] Agent dependency/capability invocation
 - [x] Explicit dependency metadata and inspectable capability graph
+- [x] Graph-derived capability viability
 - [ ] Contextual experience composition
 
 ## Status
