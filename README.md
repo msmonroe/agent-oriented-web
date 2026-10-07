@@ -6,7 +6,7 @@ An experiment in building a web application whose capabilities are supplied by d
 
 > Adding an agent should be capable of adding functionality to the site without requiring feature-specific changes to the host application.
 
-The host owns rendering, security boundaries, transport, and generic interaction primitives. Agents advertise capabilities. The registry resolves capabilities to providers, and agents return declarative experiences that the generic React host renders.
+The host owns rendering, security boundaries, transport, and generic interaction primitives. Agents advertise capabilities through a shared contract. The host discovers plugin assemblies at startup, the registry resolves capabilities to providers, and agents return declarative experiences that the generic React host renders.
 
 ## Current architecture
 
@@ -19,80 +19,136 @@ GET /api/experience/{capability}
    |
 Agent Registry
    |
-   +-- ContentAgent
-   |      +-- content.home
-   |      +-- content.about
-   |      +-- content.services
+   +-- built-in ContentAgent
    |
-   +-- EstimateAgent
-          +-- estimate.project
+   +-- runtime-discovered agents
+          |
+          +-- AgentWeb.EstimateAgent.dll
+                  +-- estimate.project
 ```
 
-Navigation is also capability-derived. Neither React nor NavigationAgent contains an Estimate-specific menu item.
+`AgentWeb.Host` does not reference or compile against `AgentWeb.EstimateAgent`.
+
+Shared types such as `ISiteAgent`, `AgentManifest`, `AgentRequest`, and `AgentResponse` live in `AgentWeb.Contracts`.
 
 ## Acceptance tests
 
 ### Experiment #1: capability-derived navigation
 
-1. Add EstimateAgent advertising `estimate.project`.
-2. Give that capability a visible navigation hint.
-3. Register the agent.
-4. Observe `Get an Estimate` in navigation.
-5. Do not change React navigation or NavigationAgent.
+EstimateAgent advertises `estimate.project` with a navigation hint. NavigationAgent discovers the capability and produces **Get an Estimate** without Estimate-specific React navigation code.
 
 **Status: passed.**
 
 ### Experiment #2: agent-provided experience
 
-1. Select `Get an Estimate`.
-2. The generic endpoint asks AgentRegistry for the provider of `estimate.project`.
-3. AgentRegistry resolves EstimateAgent.
-4. EstimateAgent returns generic experience components.
-5. React renders heading, text, input, select, and button components.
-6. Program.cs, routing, and React contain no Estimate-specific page.
+Selecting **Get an Estimate** resolves `estimate.project` to its provider. EstimateAgent returns generic heading, text, input, select, and button components. React renders those primitives without an Estimate-specific page.
 
-**Status: implemented for local verification.**
+**Status: passed.**
 
-## Run
+### Experiment #3: runtime plugin discovery
 
-Requires the .NET 9 SDK and Node.js.
+EstimateAgent was moved into the independent `AgentWeb.EstimateAgent` project. The compiled DLL is copied into `AgentWeb.Host/plugins`. At startup, PluginAgentLoader scans that directory and instantiates implementations of the shared `ISiteAgent` contract.
 
-API:
+The host has no project reference to EstimateAgent and `Program.cs` never names it.
 
-```bash
-cd src/AgentWeb.Host
+**Status: passed.**
+
+## Project structure
+
+```text
+src/
+  AgentWeb.Contracts/
+    AgentWeb.Contracts.csproj
+    AgentContracts.cs
+
+  AgentWeb.Host/
+    Agents/
+      AgentRegistry.cs
+      ContentAgent.cs
+      NavigationAgent.cs
+      PluginAgentLoader.cs
+    plugins/
+    Program.cs
+
+  AgentWeb.EstimateAgent/
+    AgentWeb.EstimateAgent.csproj
+    EstimateAgent.cs
+
+  agent-web-ui/
+    src/
+      main.jsx
+      styles.css
+```
+
+## Run the current prototype
+
+Requires .NET 9 and Node.js.
+
+### 1. Build the EstimateAgent plugin
+
+From the repository root:
+
+```powershell
+dotnet build src\AgentWeb.EstimateAgent
+```
+
+### 2. Install the plugin
+
+```powershell
+New-Item -ItemType Directory -Force src\AgentWeb.Host\plugins | Out-Null
+Copy-Item src\AgentWeb.EstimateAgent\bin\Debug\net9.0\AgentWeb.EstimateAgent.dll src\AgentWeb.Host\plugins\
+```
+
+The copied DLL is intentionally ignored by Git because it is a build artifact.
+
+### 3. Start the API
+
+```powershell
+cd src\AgentWeb.Host
 dotnet run --urls http://localhost:5000
 ```
 
-UI:
+### 4. Start the UI
 
-```bash
-cd src/agent-web-ui
+In another terminal, from the repository root:
+
+```powershell
+cd src\agent-web-ui
 npm install
 npm run dev
 ```
 
-Open the Vite URL, normally `http://localhost:5173`.
+Open `http://localhost:5173`.
 
-## Important limitation
+With the plugin installed, navigation should include **Get an Estimate**. Selecting it should display **DYNAMICALLY DISCOVERED AGENT**.
 
-Agents are still registered in-process in `Program.cs`. Adding a new agent therefore still requires rebuilding/restarting the host. The next architectural milestone is external discovery so an agent can be added without compiling the host.
+### Prove runtime composition
 
-The current experience component model is intentionally tiny and proprietary. It is a proving scaffold, not a proposed standard. We intend to evaluate A2UI/A2A/MCP compatibility rather than unnecessarily inventing competing protocols.
+Stop the host, remove `src\AgentWeb.Host\plugins\AgentWeb.EstimateAgent.dll`, and restart. **Get an Estimate** should disappear.
+
+Copy the same DLL back and restart the unchanged host. The capability should reappear.
+
+## Current limitations
+
+Discovery currently occurs at host startup. Installing or removing a plugin requires a host restart.
+
+The DLL loader is an intermediate experiment, not the intended final distribution or trust model. Loading arbitrary executable assemblies into the host raises isolation, versioning, security, and lifecycle concerns. A later architecture should evaluate out-of-process agents and standards-based discovery.
+
+The current experience component model is intentionally tiny. It proves generic rendering but is not intended to become a proprietary UI standard. A2UI/A2A/MCP compatibility should be evaluated before expanding it substantially.
 
 ## Roadmap
 
-- [x] Minimal agent manifest
-- [x] In-process agent registry
+- [x] Minimal shared agent contract
 - [x] Capability-derived navigation
 - [x] Generic React renderer
-- [x] EstimateAgent adds navigation without frontend changes
-- [x] Registry resolves a capability to its provider
-- [x] Agent supplies a declarative experience
-- [ ] Submit actions back to the owning agent
-- [ ] External/runtime agent discovery
-- [ ] Agent lifecycle and health
-- [ ] Permissions and policy enforcement
+- [x] Capability-to-provider resolution
+- [x] Agent-provided declarative experience
+- [x] Runtime plugin discovery without compiling host against the plugin
+- [ ] Add a second unrelated plugin as a generality test
+- [ ] Route generic actions and form state back to an owning agent
+- [ ] Hot discovery / lifecycle handling
+- [ ] Out-of-process agent discovery
+- [ ] Permissions, trust, and policy enforcement
 - [ ] A2A/MCP/A2UI compatibility
 - [ ] Agent dependency/capability graph
 - [ ] Contextual experience composition
