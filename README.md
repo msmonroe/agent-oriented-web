@@ -16,6 +16,7 @@ Browser
 Generic React Renderer
    |
 GET /api/experience/{capability}
+POST /api/action/{capability}
    |
 Agent Registry
    |
@@ -143,6 +144,16 @@ No Host route, NavigationAgent logic, or React renderer code was changed to supp
 
 **Status: implemented for local verification.**
 
+### Experiment #5: generic agent actions
+
+The renderer now owns generic form state for `input` and `select` primitives. A button can advertise an action capability without the renderer knowing what that capability means.
+
+For EstimateAgent, the button advertises `estimate.project.submit`. React posts the current state bag to the generic `/api/action/{capability}` endpoint, AgentRegistry resolves the advertised action capability to EstimateAgent, and the agent returns a new declarative experience containing the estimate.
+
+Neither the Host nor React contains Estimate-specific action handling.
+
+**Status: implemented for local verification.**
+
 ## Current limitations
 
 Discovery currently occurs at host startup. Installing or removing a plugin requires a host restart.
@@ -160,7 +171,7 @@ The current experience component model is intentionally tiny. It proves generic 
 - [x] Agent-provided declarative experience
 - [x] Runtime plugin discovery without compiling host against the plugin
 - [x] Add a second unrelated plugin as a generality test
-- [ ] Route generic actions and form state back to an owning agent
+- [x] Route generic actions and form state back to an owning agent
 - [ ] Hot discovery / lifecycle handling
 - [ ] Out-of-process agent discovery
 - [ ] Permissions, trust, and policy enforcement
