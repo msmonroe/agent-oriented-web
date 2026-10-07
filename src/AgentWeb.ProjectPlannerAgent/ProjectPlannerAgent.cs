@@ -5,6 +5,7 @@ namespace AgentWeb.ProjectPlannerAgent;
 
 public sealed class ProjectPlannerAgent : ISiteAgent
 {
+    private const string SubmitCapability = "plan.project.submit";
     private const string EstimateCapability = "estimate.project.submit";
 
     public AgentManifest Manifest { get; } = new(
@@ -15,7 +16,10 @@ public sealed class ProjectPlannerAgent : ISiteAgent
             new(
                 "plan.project",
                 "Create a project plan using available capabilities",
-                new(true, "Project Planner", "primary", 45)),
+                new(true, "Project Planner", "primary", 45),
+                [
+                    new(SubmitCapability)
+                ]),
             new(
                 "plan.project.submit",
                 "Generate a composed project plan",
