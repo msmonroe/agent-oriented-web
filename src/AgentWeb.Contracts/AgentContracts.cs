@@ -1,9 +1,14 @@
 namespace AgentWeb.Contracts;
 
+public sealed record AgentDependency(
+    string Capability,
+    bool Required = true);
+
 public sealed record AgentCapability(
     string Id,
     string Description,
-    NavigationHint? Navigation = null);
+    NavigationHint? Navigation = null,
+    IReadOnlyList<AgentDependency>? Dependencies = null);
 
 public sealed record NavigationHint(
     bool Visible,
