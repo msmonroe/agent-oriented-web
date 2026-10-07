@@ -17,9 +17,17 @@ public sealed record AgentManifest(
     string Description,
     IReadOnlyList<AgentCapability> Capabilities);
 
+public interface ICapabilityInvoker
+{
+    Task<AgentResponse?> InvokeAsync(
+        string capability,
+        IReadOnlyDictionary<string, object?>? state = null);
+}
+
 public sealed record AgentRequest(
     string Capability,
-    IReadOnlyDictionary<string, object?>? State = null);
+    IReadOnlyDictionary<string, object?>? State = null,
+    ICapabilityInvoker? Capabilities = null);
 
 public sealed record ExperienceComponent(
     string Type,
