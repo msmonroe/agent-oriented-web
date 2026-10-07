@@ -24,10 +24,13 @@ Agent Registry
    +-- runtime-discovered agents
           |
           +-- AgentWeb.EstimateAgent.dll
-                  +-- estimate.project
+          |       +-- estimate.project
+          |
+          +-- AgentWeb.SystemStatusAgent.dll
+                  +-- system.status
 ```
 
-`AgentWeb.Host` does not reference or compile against `AgentWeb.EstimateAgent`.
+`AgentWeb.Host` does not reference or compile against either plugin project.
 
 Shared types such as `ISiteAgent`, `AgentManifest`, `AgentRequest`, and `AgentResponse` live in `AgentWeb.Contracts`.
 
@@ -74,6 +77,10 @@ src/
     AgentWeb.EstimateAgent.csproj
     EstimateAgent.cs
 
+  AgentWeb.SystemStatusAgent/
+    AgentWeb.SystemStatusAgent.csproj
+    SystemStatusAgent.cs
+
   agent-web-ui/
     src/
       main.jsx
@@ -84,7 +91,7 @@ src/
 
 Requires .NET 9 and Node.js.
 
-### 1. Build the EstimateAgent plugin
+### 1. Build the plugins
 
 From the repository root:
 
@@ -120,13 +127,21 @@ npm run dev
 
 Open `http://localhost:5173`.
 
-With the plugin installed, navigation should include **Get an Estimate**. Selecting it should display **DYNAMICALLY DISCOVERED AGENT**.
+With both plugins installed, navigation should include **Get an Estimate** and **System Status**. System Status is supplied by an unrelated plugin and uses only renderer primitives that already existed before the plugin was written.
 
 ### Prove runtime composition
 
 Stop the host, remove `src\AgentWeb.Host\plugins\AgentWeb.EstimateAgent.dll`, and restart. **Get an Estimate** should disappear.
 
 Copy the same DLL back and restart the unchanged host. The capability should reappear.
+
+### Experiment #4: unrelated-plugin generality test
+
+SystemStatusAgent advertises `system.status` from a second independent assembly. It reports deterministic runtime information using only the existing generic `eyebrow`, `heading`, and `text` primitives.
+
+No Host route, NavigationAgent logic, or React renderer code was changed to support System Status.
+
+**Status: implemented for local verification.**
 
 ## Current limitations
 
@@ -144,7 +159,7 @@ The current experience component model is intentionally tiny. It proves generic 
 - [x] Capability-to-provider resolution
 - [x] Agent-provided declarative experience
 - [x] Runtime plugin discovery without compiling host against the plugin
-- [ ] Add a second unrelated plugin as a generality test
+- [x] Add a second unrelated plugin as a generality test
 - [ ] Route generic actions and form state back to an owning agent
 - [ ] Hot discovery / lifecycle handling
 - [ ] Out-of-process agent discovery
