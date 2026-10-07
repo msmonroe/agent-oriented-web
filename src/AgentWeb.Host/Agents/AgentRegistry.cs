@@ -17,11 +17,13 @@ public sealed class AgentRegistry(IEnumerable<ISiteAgent> agents)
             agent.Manifest.Capabilities.Any(candidate =>
                 string.Equals(candidate.Id, capability, StringComparison.OrdinalIgnoreCase)));
 
-    public async Task<AgentResponse?> ExecuteAsync(string capability)
+    public async Task<AgentResponse?> ExecuteAsync(
+        string capability,
+        IReadOnlyDictionary<string, object?>? state = null)
     {
         var agent = Resolve(capability);
         return agent is null
             ? null
-            : await agent.ExecuteAsync(new AgentRequest(capability));
+            : await agent.ExecuteAsync(new AgentRequest(capability, state));
     }
 }
