@@ -82,6 +82,10 @@ src/
     AgentWeb.SystemStatusAgent.csproj
     SystemStatusAgent.cs
 
+  AgentWeb.ProjectPlannerAgent/
+    AgentWeb.ProjectPlannerAgent.csproj
+    ProjectPlannerAgent.cs
+
   agent-web-ui/
     src/
       main.jsx
@@ -152,6 +156,16 @@ For EstimateAgent, the button advertises `estimate.project.submit`. React posts 
 
 Neither the Host nor React contains Estimate-specific action handling.
 
+**Status: passed.**
+
+### Experiment #6: capability composition
+
+ProjectPlannerAgent is a third runtime-discovered plugin. It provides `plan.project` and `plan.project.submit`, but it does not implement project estimation itself.
+
+When building a plan, ProjectPlannerAgent asks the execution context for `estimate.project.submit` through the generic `ICapabilityInvoker`. AgentRegistry resolves whichever installed agent provides that capability and returns its response. The planner then composes selected results into its own experience.
+
+ProjectPlannerAgent has no project reference to EstimateAgent and never names its type.
+
 **Status: implemented for local verification.**
 
 ## Current limitations
@@ -176,7 +190,8 @@ The current experience component model is intentionally tiny. It proves generic 
 - [ ] Out-of-process agent discovery
 - [ ] Permissions, trust, and policy enforcement
 - [ ] A2A/MCP/A2UI compatibility
-- [ ] Agent dependency/capability graph
+- [x] Agent dependency/capability invocation
+- [ ] Explicit dependency metadata and inspectable capability graph
 - [ ] Contextual experience composition
 
 ## Status
