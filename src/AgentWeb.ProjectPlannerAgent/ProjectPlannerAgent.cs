@@ -18,7 +18,11 @@ public sealed class ProjectPlannerAgent : ISiteAgent
                 new(true, "Project Planner", "primary", 45)),
             new(
                 "plan.project.submit",
-                "Generate a composed project plan")
+                "Generate a composed project plan",
+                Dependencies:
+                [
+                    new(EstimateCapability)
+                ])
         ]);
 
     public Task<AgentResponse> ExecuteAsync(AgentRequest request) =>
