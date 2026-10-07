@@ -17,7 +17,9 @@ public sealed record AgentManifest(
     string Description,
     IReadOnlyList<AgentCapability> Capabilities);
 
-public sealed record AgentRequest(string Capability);
+public sealed record AgentRequest(
+    string Capability,
+    IReadOnlyDictionary<string, object?>? State = null);
 
 public sealed record ExperienceComponent(
     string Type,
