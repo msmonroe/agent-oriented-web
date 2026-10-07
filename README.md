@@ -168,6 +168,16 @@ ProjectPlannerAgent has no project reference to EstimateAgent and never names it
 
 **Status: implemented for local verification.**
 
+### Experiment #7: declarative capability graph
+
+Capabilities can now declare dependencies in their manifest metadata. `plan.project.submit` declares a required dependency on `estimate.project.submit`.
+
+The Host exposes `GET /api/capabilities`, which constructs an inspectable graph from discovered manifests. Each node reports its provider and each dependency reports whether it is currently available and which agent provides it.
+
+This allows the runtime to inspect composition requirements before execution rather than discovering every missing dependency only after an action is invoked.
+
+**Status: implemented for local verification.**
+
 ## Current limitations
 
 Discovery currently occurs at host startup. Installing or removing a plugin requires a host restart.
@@ -191,7 +201,7 @@ The current experience component model is intentionally tiny. It proves generic 
 - [ ] Permissions, trust, and policy enforcement
 - [ ] A2A/MCP/A2UI compatibility
 - [x] Agent dependency/capability invocation
-- [ ] Explicit dependency metadata and inspectable capability graph
+- [x] Explicit dependency metadata and inspectable capability graph
 - [ ] Contextual experience composition
 
 ## Status
