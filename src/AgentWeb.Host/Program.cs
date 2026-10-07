@@ -34,4 +34,15 @@ app.MapGet("/api/experience/{capability}", async (string capability, AgentRegist
         : Results.Ok(response);
 });
 
+app.MapPost("/api/action/{capability}", async (
+    string capability,
+    Dictionary<string, object?> state,
+    AgentRegistry registry) =>
+{
+    var response = await registry.ExecuteAsync(capability, state);
+    return response is null
+        ? Results.NotFound(new { error = $"No agent provides capability '{capability}'." })
+        : Results.Ok(response);
+});
+
 app.Run();
