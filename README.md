@@ -187,7 +187,19 @@ NavigationAgent now includes only visible capabilities that ExperienceResolver c
 
 The Host exposes `GET /api/viability` for inspection.
 
-With EstimateAgent installed, Project Planner remains visible. If EstimateAgent is removed and the host is restarted, `plan.project.submit` becomes non-viable because its required `estimate.project.submit` dependency has no provider.
+Project Planner's visible entry capability, `plan.project`, explicitly requires `plan.project.submit`, which in turn requires `estimate.project.submit`. This creates a transitive viability chain.
+
+With EstimateAgent installed, the entire chain is viable and Project Planner remains visible. If EstimateAgent is removed and the host is restarted, `estimate.project.submit` has no provider, which makes `plan.project.submit` non-viable, which then makes `plan.project` non-viable. Navigation therefore removes Project Planner without any Project Planner-specific rule.
+
+**Status: implemented for local verification.**
+
+### Experiment #9: transitive entry-point viability
+
+The Project Planner entry capability now declares its submit capability as a required dependency. This tests whether viability propagates through multiple graph edges and whether a visible experience disappears when a transitive requirement is missing.
+
+Expected chain:
+
+`plan.project → plan.project.submit → estimate.project.submit`
 
 **Status: implemented for local verification.**
 
